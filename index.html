@@ -1,1 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>极简 Todo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
+    body {
+      background-color: #f7f8fa;
+      padding: 2rem 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      color: #222;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #todoInput {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    #todoInput:focus {
+      border-color: #4e6ef2;
+    }
+
+    #addBtn {
+      padding: 0.8rem 1.2rem;
+      background: #4e6ef2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #addBtn:hover {
+      background: #3d5ce0;
+    }
+
+    .todo-list {
+      list-style: none;
+    }
+
+    .todo-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 1rem;
+    }
+
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .todo-check {
+      width: 1.2rem;
+      height: 1.2rem;
+      cursor: pointer;
+    }
+
+    .del-btn {
+      color: #ff4d4f;
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .del-btn:hover {
+      color: #d9363e;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>极简 Todo</h1>
+
+  <div class="input-box">
+    <input type="text" id="todoInput" placeholder="输入待办事项..." />
+    <button id="addBtn">添加</button>
+  </div>
+
+  <ul class="todo-list" id="todoList"></ul>
+
+  <script>
+    const todoInput = document.getElementById('todoInput');
+    const addBtn = document.getElementById('addBtn');
+    const todoList = document.getElementById('todoList');
+
+    // 读取本地存储
+    function getTodos() {
+      const todos = localStorage.getItem('todos');
+      return todos ? JSON.parse(todos) : [];
+    }
+
+    // 保存到本地存储
+    function saveTodos(todos) {
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+
+    // 渲染列表
+    function render() {
+      const todos = getTodos();
+      todoList.innerHTML = '';
+
+      if (todos.length === 0) {
+        todoList.innerHTML = '<li class="empty">暂无待办事项</li>';
+        return;
+      }
+
+      todos.forEach((todo, index) => {
+        const li = document.createElement('li');
+        li.className = 'todo-item' + (todo.completed ? ' completed' : '');
+
+        li.innerHTML = `
+          <input type="checkbox" class="todo-check" ${todo.completed ? 'checked' : ''} data-index="${index}">
+          <span class="todo-text">${todo.text}</span>
+          <button class="del-btn" data-index="${index}">删除</button>
+        `;
+        todoList.appendChild(li);
+      });
+
+      // 绑定事件
+      bindEvents();
+    }
+
+    // 添加
+    function addTodo() {
+      const text = todoInput.value.trim();
+      if (!text) return;
+      const todos = getTodos();
+      todos.push({ text, completed: false });
+      saveTodos(todos);
+      todoInput.value = '';
+      render();
+    }
+
+    // 切换完成状态
+    function toggleComplete(index) {
+      const todos = getTodos();
+      todos[index].completed = !todos[index].completed;
+      saveTodos(todos);
+      render();
+    }
+
+    // 删除
+    function deleteTodo(index) {
+      const todos = getTodos();
+      todos.splice(index, 1);
+      saveTodos(todos);
+      render();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.todo-check').forEach(checkbox => {
+        checkbox.addEventListener('change', e => {
+          toggleComplete(e.target.dataset.index);
+        });
+      });
+
+      document.querySelectorAll('.del-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          deleteTodo(e.target.dataset.index);
+        });
+      });
+    }
+
+    addBtn.addEventListener('click', addTodo);
+    todoInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    // 初始化
+    render();
+  </script>
+</body>
+</html>
